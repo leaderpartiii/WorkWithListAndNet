@@ -12,7 +12,8 @@ private suspend fun getImageUrl(): String {
     val apiClient = ApiClient()
     val url = "https://api.waifu.im/search"
     val requestBody = mapOf(
-        "included_tags" to "maid",
+//        "included_tags" to "maid",
+        "included_tags" to "is_nsfw",
         "height" to ">=2000"
     )
     val rawJson = apiClient.fetch(url, requestBody)

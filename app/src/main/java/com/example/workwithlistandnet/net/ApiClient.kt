@@ -41,12 +41,4 @@ class ApiClient {
             }
             return@withContext response.bodyAsText()
         }
-    suspend fun downloadImage(url: String): Bitmap? = withContext(Dispatchers.IO) {
-        try {
-            val response = client.get(url).readBytes()
-            return@withContext BitmapFactory.decodeByteArray(response, 0, response.size)
-        } catch (e: Exception) {
-            throw e
-        }
-    }
 }

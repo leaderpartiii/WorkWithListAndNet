@@ -1,12 +1,19 @@
 package com.example.workwithlistandnet.content
 
-class Gif : ApiContent() {
-    override fun getApiRequest() {
-        TODO("Not yet implemented")
-    }
+import android.os.Bundle
+import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.Composable
 
-    override fun postApiRequest() {
-        TODO("Not yet implemented")
+class Gif :AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent { MainWindow() }
+    }
+    @Composable
+    fun MainWindow() {
+
     }
 
 }
+

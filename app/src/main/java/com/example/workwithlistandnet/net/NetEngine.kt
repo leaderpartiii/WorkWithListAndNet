@@ -1,5 +1,6 @@
 package com.example.workwithlistandnet.net
 
+import android.util.Log
 import org.json.JSONObject
 
 suspend fun getImage(): String {
@@ -24,13 +25,13 @@ suspend fun getGif(prompt: String): String {
 
 private suspend fun getGifUrl(prompt: String): String {
 //    val API_KEY = BuildConfig.API_KEY
-    val API_KEY = "NCXrQHFUi7ZOT7G6Uy4OY5LuFqK3SU7L"
+//    val API_KEY = "NCXrQHFUi7ZOT7G6Uy4OY5LuFqK3SU7L"
+    val API_KEY = "XG5jA7fEilJIIH5RM79Z5HuXx0FVAtmi";
 
     val apiClient = ApiClient()
     val url =
         "https://api.giphy.com/v1/gifs/search?api_key=$API_KEY&q=$prompt&limit=1&offset=0&rating=g&lang=en&bundle=messaging_non_clips"
     val rawJson = apiClient.fetch(url)
-
 
     if (JSONObject(rawJson)
             .getJSONArray("data")

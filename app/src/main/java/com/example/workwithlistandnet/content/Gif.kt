@@ -22,6 +22,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -40,7 +41,6 @@ import kotlinx.coroutines.delay
 class Gif : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent { MainWindow() }
     }
 
@@ -67,7 +67,7 @@ class Gif : AppCompatActivity() {
                 LoadingWithDots()
             else if (textFromKeyboard.value.isNotEmpty() && error.value.isEmpty() && (!loadingImage.value && !loadingRequest.value))
                 Text(text = "Вот что именно получилось")
-            else if (textFromKeyboard.value.isNotEmpty() && error.value.isNotEmpty()) {
+            else if (error.value.isNotEmpty()) {
                 Text(text = "Что-то не очень получилось ${error.value}")
             }
             Row(
@@ -162,7 +162,6 @@ class Gif : AppCompatActivity() {
                     DisplayImage(resultUrl.value)
 
                 }
-
                 else -> {
 
                     DisplayImage(resultUrl.value)

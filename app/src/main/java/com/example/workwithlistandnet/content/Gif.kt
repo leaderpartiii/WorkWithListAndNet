@@ -1,77 +1,83 @@
 package com.example.workwithlistandnet.content
 
 import android.os.Bundle
-import android.util.Log
+import android.widget.ImageView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import coil3.compose.AsyncImage
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.gif.GifDrawable
+import com.bumptech.glide.request.RequestListener
 import com.example.workwithlistandnet.R
 import com.example.workwithlistandnet.net.getGif
-import com.example.workwithlistandnet.net.getImage
-import com.giphy.sdk.core.models.enums.MediaType
-import com.giphy.sdk.ui.Giphy
-import com.giphy.sdk.ui.views.GiphyDialogFragment
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.delay
 
 class Gif : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        Giphy.configure(this, "NCXrQHFUi7ZOT7G6Uy4OY5LuFqK3SU7L")
-//        GiphyDialogFragment.newInstance().show(supportFragmentManager, "giphy_dialog")
 
         setContent { MainWindow() }
     }
 
     @Composable
     fun MainWindow() {
-        Log.d("Debug", "MainWindow")
 
-        val result = rememberSaveable { mutableStateOf("") }
-        val error = rememberSaveable { mutableIntStateOf(0) }
-        val loadingRequest = rememberSaveable { mutableStateOf(true) }
+        val textFromKeyboard = rememberSaveable { mutableStateOf("") }
+        val resultUrl = rememberSaveable { mutableStateOf("") }
+        val error = rememberSaveable { mutableStateOf("") }
+        val loadingRequest = rememberSaveable { mutableStateOf(false) }
         val loadingImage = rememberSaveable { mutableStateOf(false) }
 
-        LoadImage(result, error, loadingRequest, loadingImage)
+        LoadImage(resultUrl, error, loadingRequest, loadingImage, textFromKeyboard)
 
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ActionButton(result, error, loadingRequest, loadingImage)
-            if (error.intValue == 0 && (loadingImage.value || loadingRequest.value))
+
+            ActionButton(resultUrl, error, loadingRequest, loadingImage, textFromKeyboard)
+            TextInputWithCloseKeyboard(textFromKeyboard, loadingRequest)
+            if (textFromKeyboard.value.isNotEmpty() && error.value.isEmpty() && (loadingImage.value || loadingRequest.value))
                 LoadingWithDots()
-            else if (error.intValue == 0 && (!loadingImage.value && !loadingRequest.value))
+            else if (textFromKeyboard.value.isNotEmpty() && error.value.isEmpty() && (!loadingImage.value && !loadingRequest.value))
                 Text(text = "Вот что именно получилось")
-            else
-                Text(text = "Что-то не очень получилось")
+            else if (textFromKeyboard.value.isNotEmpty() && error.value.isNotEmpty()) {
+                Text(text = "Что-то не очень получилось ${error.value}")
+            }
             Row(
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                DisplayContent(result, error, loadingRequest, loadingImage)
+                DisplayContent(resultUrl, error, loadingRequest, loadingImage, textFromKeyboard)
             }
         }
     }
@@ -101,19 +107,18 @@ class Gif : AppCompatActivity() {
 
     @Composable
     fun LoadImage(
-        result: MutableState<String>,
-        error: MutableIntState,
+        resultUrl: MutableState<String>,
+        error: MutableState<String>,
         loadingRequest: MutableState<Boolean>,
         loadingImage: MutableState<Boolean>,
+        prompt: MutableState<String>
     ) {
-        LaunchedEffect(result.value.isEmpty()) {
+        LaunchedEffect(prompt.value.isNotEmpty()) {
             try {
-                Log.d("Debug", "LoadImage")
-                val image = getGif("dogs")
-                result.value = image
+                val image = getGif(prompt.value)
+                resultUrl.value = image
             } catch (e: Exception) {
-                error.intValue = 1
-                Log.d("Error", e.toString())
+                error.value = e.message.toString()
             } finally {
                 loadingRequest.value = false
                 loadingImage.value = true
@@ -123,16 +128,18 @@ class Gif : AppCompatActivity() {
 
     @Composable
     fun ActionButton(
-        result: MutableState<String>,
-        error: MutableIntState,
+        resultUrl: MutableState<String>,
+        error: MutableState<String>,
         loadingRequest: MutableState<Boolean>,
-        loadingImage: MutableState<Boolean>
+        loadingImage: MutableState<Boolean>,
+        textFromKeyboard: MutableState<String>
     ) {
         Button(onClick = {
-            result.value = ""
-            error.intValue = 0
-            loadingRequest.value = true
+            resultUrl.value = ""
+            error.value = ""
+            loadingRequest.value = false
             loadingImage.value = false
+            textFromKeyboard.value = ""
         }) {
             Text(text = "Перегенерировать гифку")
         }
@@ -140,31 +147,27 @@ class Gif : AppCompatActivity() {
 
     @Composable
     fun DisplayContent(
-        result: MutableState<String>,
-        error: MutableIntState,
+        resultUrl: MutableState<String>,
+        error: MutableState<String>,
         loadingRequest: MutableState<Boolean>,
-        loadingImage: MutableState<Boolean>
+        loadingImage: MutableState<Boolean>,
+        textFromKeyboard: MutableState<String>
     ) {
-        if (error.intValue == 0) {
+        if (error.value.isEmpty() && textFromKeyboard.value.isNotEmpty()) {
             when {
-                loadingRequest.value -> DisplayLoadingGif()
+                loadingRequest.value -> {
+                    DisplayLoadingGif(loadingImage)
+                }
+
                 loadingImage.value -> {
-                    DisplayLoadingGif()
-                    AsyncImage(
-                        model = result.value,
-                        contentDescription = null,
-                        onSuccess = { loadingImage.value = false },
-                        onError = { error.intValue = 1 }
-                    )
+
+                    DisplayImage(resultUrl.value)
+
                 }
 
                 else -> {
-                    AsyncImage(
-                        model = result.value,
-                        contentDescription = null,
-                        onSuccess = { loadingImage.value = false },
-                        onError = { error.intValue = 1 }
-                    )
+
+                    DisplayImage(resultUrl.value)
                 }
             }
         } else {
@@ -176,17 +179,88 @@ class Gif : AppCompatActivity() {
     }
 
     @Composable
-    fun DisplayLoadingGif() {
-        Image(
-            painter = rememberDrawablePainter(
-                drawable = AppCompatResources.getDrawable(
-                    LocalContext.current,
-                    R.drawable.loading
-
-                )
-            ),
-            contentDescription = "Loading animation ",
+    fun DisplayLoadingGif(loadingImage: MutableState<Boolean>) {
+        AndroidView(
+            factory = { context ->
+                ImageView(context).apply {
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                    Glide.with(this)
+                        .asGif()
+                        .load(R.drawable.loading)
+                        .listener(loadGifListener(loadingImage))
+                        .into(this)
+                }
+            },
+            modifier = Modifier.size(200.dp)
         )
+    }
+
+    private fun loadGifListener(loadingImage: MutableState<Boolean>): RequestListener<GifDrawable> {
+        return object : RequestListener<GifDrawable> {
+
+            override fun onLoadFailed(
+                e: GlideException?,
+                model: Any?,
+                target: com.bumptech.glide.request.target.Target<GifDrawable>?,
+                isFirstResource: Boolean
+            ): Boolean {
+                return false
+            }
+
+            override fun onResourceReady(
+                resource: GifDrawable?,
+                model: Any?,
+                target: com.bumptech.glide.request.target.Target<GifDrawable>?,
+                dataSource: DataSource?,
+                isFirstResource: Boolean
+            ): Boolean {
+                loadingImage.value = false;
+                return false
+            }
+        }
+    }
+
+    @Composable
+    fun DisplayImage(gifUrl: String) {
+        AndroidView(
+            factory = { context ->
+                ImageView(context).apply {
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                    Glide.with(this)
+                        .asGif()
+                        .load(gifUrl)
+                        .into(this)
+                }
+            },
+            modifier = Modifier.size(200.dp)
+        )
+    }
+
+    @Composable
+    fun TextInputWithCloseKeyboard(
+        text: MutableState<String>,
+        loadingRequest: MutableState<Boolean>
+    ) {
+        val words = remember { mutableStateOf(text.value) }
+        val keyboardController = LocalSoftwareKeyboardController.current
+
+        TextField(
+            value = words.value,
+            onValueChange = { newText -> words.value = newText },
+            label = { Text("Введите текст") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Button(
+            onClick = {
+                keyboardController?.hide()
+                text.value = words.value
+                loadingRequest.value = true
+            },
+            modifier = Modifier.padding(top = 8.dp)
+        ) {
+            Text("Закрыть клавиатуру и отправить запрос")
+        }
     }
 
 }

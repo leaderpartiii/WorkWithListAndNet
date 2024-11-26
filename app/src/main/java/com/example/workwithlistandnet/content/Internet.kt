@@ -1,7 +1,6 @@
 package com.example.workwithlistandnet.content
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.ImageView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -110,7 +109,6 @@ class Internet : AppCompatActivity() {
                 result.value = image
             } catch (e: Exception) {
                 error.intValue = 1
-                Log.d("Error", e.toString())
             } finally {
                 loadingRequest.value = false
                 loadingImage.value = true

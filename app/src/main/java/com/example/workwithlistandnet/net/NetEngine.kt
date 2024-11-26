@@ -11,8 +11,7 @@ private suspend fun getImageUrl(): String {
     val apiClient = ApiClient()
     val url = "https://api.waifu.im/search"
     val requestBody = mapOf(
-//        "included_tags" to "maid",
-//        "included_tags" to "is_nsfw",
+        "included_tags" to "no_nsfw",
         "height" to ">=2000"
     )
     val rawJson = apiClient.fetch(url, requestBody)
@@ -31,7 +30,21 @@ private suspend fun getGifUrl(prompt: String): String {
     val url =
         "https://api.giphy.com/v1/gifs/search?api_key=$API_KEY&q=$prompt&limit=1&offset=0&rating=g&lang=en&bundle=messaging_non_clips"
     val rawJson = apiClient.fetch(url)
-//    Log.d("Debug", rawJson)
-//    Log.d("Debug", JSONObject(rawJson).getJSONArray("data").getJSONObject(0).getString("url"))
-    return JSONObject(rawJson).getJSONArray("data").getJSONObject(0).getString("url")
+
+
+    if (JSONObject(rawJson)
+            .getJSONArray("data")
+            .length() == 0
+    ) {
+        throw Exception("Exceeded the number of requests")
+    }
+
+
+    return JSONObject(rawJson)
+        .getJSONArray("data")
+        .getJSONObject(0)
+        .getJSONObject("images")
+        .getJSONObject("original")
+        .getString("url")
+//    return JSONObject(rawJson).getJSONArray("data").getJSONObject(0).getString("url")
 }

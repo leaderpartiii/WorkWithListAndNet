@@ -68,10 +68,10 @@ fun MainWindow() {
                 Button(onClick = {
                     context.startActivity(Intent(context, Gif::class.java))
                 }) {
-                    Text(text = "Generate pictures from AI")
+                    Text(text = "Generate gifs from prompt")
                 }
                 Button(onClick = { /*TODO*/ }) {
-                    Text(text = "Generate gifs from internet")
+                    Text(text = "Generate AI pictures from internet (is not working)")
                 }
             }
         }

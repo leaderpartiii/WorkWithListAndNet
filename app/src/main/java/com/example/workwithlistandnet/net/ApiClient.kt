@@ -33,8 +33,6 @@ class ApiClient {
                     })
                 }
             }
-            Log.d("Debug", bodyRequest.toString())
-            Log.d("Status code", "fetchImageFromPrompt: ${response.status.value}")
             if (response.status.value != 200) {
                 throw Exception(response.status.value.toString())
             }

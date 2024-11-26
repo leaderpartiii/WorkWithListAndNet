@@ -37,29 +37,6 @@ class Internet : AppCompatActivity() {
         setContent { MainWindow() }
     }
 
-    @Composable
-    fun LoadingWithDots() {
-        val dots = rememberSaveable { mutableStateOf("") }
-
-        LaunchedEffect(Unit) {
-            while (true) {
-                dots.value = when (dots.value) {
-                    "" -> "."
-                    "." -> ".."
-                    ".." -> "..."
-                    "..." -> ""
-                    else -> ""
-                }
-                delay(500)
-            }
-        }
-
-        Text(
-            text = "Загрузка ${dots.value}",
-            style = MaterialTheme.typography.bodyLarge,
-        )
-    }
-
 
     @Composable
     fun MainWindow() {
@@ -90,6 +67,29 @@ class Internet : AppCompatActivity() {
                 DisplayContent(result, error, loadingRequest, loadingImage)
             }
         }
+    }
+
+    @Composable
+    fun LoadingWithDots() {
+        val dots = rememberSaveable { mutableStateOf("") }
+
+        LaunchedEffect(Unit) {
+            while (true) {
+                dots.value = when (dots.value) {
+                    "" -> "."
+                    "." -> ".."
+                    ".." -> "..."
+                    "..." -> ""
+                    else -> ""
+                }
+                delay(500)
+            }
+        }
+
+        Text(
+            text = "Загрузка ${dots.value}",
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
 
     @Composable
@@ -178,8 +178,6 @@ class Internet : AppCompatActivity() {
                 )
             ),
             contentDescription = "Loading animation ",
-//        modifier = Modifier.fillMaxSize(),
-//        contentScale = ContentScale.Crop
         )
     }
 }

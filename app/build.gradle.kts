@@ -33,16 +33,16 @@ android {
         }
         release {
             isMinifyEnabled = false
-            proguardFiles(
+            /*proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
-            )
+            )*/
 
             val keystoreFile = project.rootProject.file("keys.properties")
             val properties = Properties()
             properties.load(keystoreFile.inputStream())
 
-            val apiKey = properties.getProperty("API_KEY") ?: "123"
+            val apiKey = properties.getProperty("API_KEY") ?: ""
             buildConfigField(type = "String", name = "API_KEY", value = apiKey)
         }
     }
@@ -90,6 +90,7 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.coil.gif)
     implementation(libs.accompanist.drawablepainter)
+    implementation("com.giphy.sdk:ui:2.3.15")
 
 
     testImplementation(libs.junit)

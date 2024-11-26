@@ -24,7 +24,7 @@ class ApiClient {
 
     private val client = HttpClient(OkHttp)
 
-    suspend fun fetch(url: String, bodyRequest: Map<String, String>): String =
+    suspend fun fetch(url: String, bodyRequest: Map<String, String> = mapOf()): String =
         withContext(Dispatchers.IO) {
             val response = client.get(url) {
                 url {
@@ -36,7 +36,6 @@ class ApiClient {
             Log.d("Debug", bodyRequest.toString())
             Log.d("Status code", "fetchImageFromPrompt: ${response.status.value}")
             if (response.status.value != 200) {
-                Log.d("Status code", "fetchImageFromPrompt: ${response.status.value}")
                 throw Exception(response.status.value.toString())
             }
             return@withContext response.bodyAsText()

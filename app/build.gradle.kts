@@ -91,6 +91,7 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.accompanist.drawablepainter)
     implementation("com.giphy.sdk:ui:2.3.15")
+    implementation(libs.glide)
 
 
     testImplementation(libs.junit)

@@ -1,7 +1,6 @@
 package com.example.workwithlistandnet.content
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.ImageView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -70,7 +69,7 @@ class Internet : AppCompatActivity() {
         val listState = rememberLazyListState()
 
 
-        AddImageToDB(imageDao, imagesList, loadingImage)
+        AddImageToDB(imageDao, imagesList)
         LoadImage(imagesList, error, loadingRequest, loadingImage)
 
 
@@ -180,7 +179,6 @@ class Internet : AppCompatActivity() {
     fun AddImageToDB(
         imageDao: ImageDao,
         result: SnapshotStateList<String>,
-        loadingImage: MutableState<Boolean>
     ) {
         LaunchedEffect(if (result.isEmpty()) result.isEmpty() else result.last()) {
             if (result.isNotEmpty()) {
@@ -283,11 +281,11 @@ class Internet : AppCompatActivity() {
     ) {
         if (error.intValue == 0) {
             when {
-                size == 0 -> {
+                loadingRequest.value -> {
                     DisplayLoadingGif()
                 }
 
-                loadingImage.value && size == 1 -> {
+                loadingImage.value && size != 0 -> {
                     DisplayLoadingGif()
                     AsyncImage(
                         model = result,

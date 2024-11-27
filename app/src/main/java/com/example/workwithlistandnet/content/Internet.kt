@@ -43,6 +43,8 @@ import com.example.workwithlistandnet.R
 import kotlinx.coroutines.delay
 import com.example.workwithlistandnet.db.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class Internet : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,31 +55,28 @@ class Internet : AppCompatActivity() {
 
     @Composable
     fun MainWindow() {
-
-
         val context = LocalContext.current
-        val database = remember { mutableStateOf<AppDatabase?>(null) }
-        val imageDao = remember { mutableStateOf<ImageDao?>(null) }
+//        val imageDao = remember { mutableStateOf<ImageDao?>(null) }
+//        val database = AppDatabase.getInstance(context)
+//            val imageDao = database.imageDao()
+        val imageDao = AppDatabase.getInstance(context).imageDao()
+        val imagesList = GetImagesFromDB(imageDao)
 
-        // Список URL-адресов изображений
-        val imagesList = remember { mutableStateListOf<String>() }
-
-        // Инициализация базы данных и загрузка данных
-        LaunchedEffect(context) {
-            database.value = AppDatabase.getInstance(context)
-            imageDao.value = database.value?.imageDao()
-            imageDao.value?.let { dao ->
-                val imagesFromDB = dao.getAllImages().map { it.url }
-                imagesList.addAll(imagesFromDB)
-            }
-        }
+//        lifecycleScope.launch {
+//            database.value = AppDatabase.getInstance(context)
+//            imageDao.value = database.value?.imageDao()
+//            imageDao.value?.let { dao ->
+//                val imagesFromDB = dao.getAllImages().map { it.url }
+//                imagesList.addAll(imagesFromDB)
+//            }
+//        }
 
         val error = rememberSaveable { mutableIntStateOf(0) }
         val loadingRequest = rememberSaveable { mutableStateOf(false) }
-        val loadingImage = rememberSaveable { mutableStateOf(false) }
+        val loadingImage =
+            rememberSaveable { mutableStateOf(imagesList.isNotEmpty()) }
         val onSuccess = rememberSaveable { mutableStateOf(false) }
 
-//        val imagesList = GetImagesFromDB(imageDao)
         val listState = rememberLazyListState()
 
 
@@ -179,11 +178,11 @@ class Internet : AppCompatActivity() {
     }
 
     @Composable
-    fun AddImageToDB(imageDao: MutableState<ImageDao?>, result: SnapshotStateList<String>) {
+    fun AddImageToDB(imageDao: ImageDao, result: SnapshotStateList<String>) {
         LaunchedEffect(result) {
             if (result.isNotEmpty()) {
                 val newImage = ImageEntity(url = result.last())
-                imageDao.value?.insertImage(newImage)
+                imageDao.insertImage(newImage)
             }
         }
     }
@@ -196,6 +195,8 @@ class Internet : AppCompatActivity() {
             val images = imageDao.getAllImages()
             imagesList.addAll(images.map { it.url })
         }
+        Log.d("Debug", imagesList.toString())
+
         return imagesList
     }
 

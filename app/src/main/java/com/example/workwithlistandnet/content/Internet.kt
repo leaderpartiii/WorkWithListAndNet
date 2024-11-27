@@ -42,9 +42,7 @@ import com.bumptech.glide.request.RequestListener
 import com.example.workwithlistandnet.R
 import kotlinx.coroutines.delay
 import com.example.workwithlistandnet.db.*
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import androidx.room.Room
 
 class Internet : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,21 +53,13 @@ class Internet : AppCompatActivity() {
 
     @Composable
     fun MainWindow() {
-        val context = LocalContext.current
-//        val imageDao = remember { mutableStateOf<ImageDao?>(null) }
-//        val database = AppDatabase.getInstance(context)
-//            val imageDao = database.imageDao()
-        val imageDao = AppDatabase.getInstance(context).imageDao()
+        val db = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java, "database-name"
+        ).allowMainThreadQueries().build()
+        val imageDao = db.imageDao()
         val imagesList = GetImagesFromDB(imageDao)
 
-//        lifecycleScope.launch {
-//            database.value = AppDatabase.getInstance(context)
-//            imageDao.value = database.value?.imageDao()
-//            imageDao.value?.let { dao ->
-//                val imagesFromDB = dao.getAllImages().map { it.url }
-//                imagesList.addAll(imagesFromDB)
-//            }
-//        }
 
         val error = rememberSaveable { mutableIntStateOf(0) }
         val loadingRequest = rememberSaveable { mutableStateOf(false) }
@@ -80,8 +70,8 @@ class Internet : AppCompatActivity() {
         val listState = rememberLazyListState()
 
 
+        AddImageToDB(imageDao, imagesList, loadingImage)
         LoadImage(imagesList, error, loadingRequest, loadingImage)
-        AddImageToDB(imageDao, imagesList)
 
 
         Column(
@@ -90,6 +80,13 @@ class Internet : AppCompatActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             NewImage(error, loadingRequest, loadingImage, onSuccess)
+            ResetButton(
+                result = imagesList,
+                error = error,
+                loadingRequest = loadingRequest,
+                loadingImage = loadingImage,
+                imageDao
+            )
             if (error.intValue == 0 && (loadingImage.value || loadingRequest.value) && !onSuccess.value)
                 LoadingWithDots()
             else if (error.intValue == 0 && (!loadingImage.value && !loadingRequest.value) && onSuccess.value)
@@ -166,23 +163,34 @@ class Internet : AppCompatActivity() {
         error: MutableIntState,
         loadingRequest: MutableState<Boolean>,
         loadingImage: MutableState<Boolean>,
+        imageDao: ImageDao,
     ) {
         Button(onClick = {
             result.clear()
             error.intValue = 0
             loadingRequest.value = true
             loadingImage.value = false
+            imageDao.clearImages()
         }) {
-            Text(text = "Перегенерировать вайфу")
+            Text(text = "Сбросить всё")
         }
     }
 
     @Composable
-    fun AddImageToDB(imageDao: ImageDao, result: SnapshotStateList<String>) {
-        LaunchedEffect(result) {
+    fun AddImageToDB(
+        imageDao: ImageDao,
+        result: SnapshotStateList<String>,
+        loadingImage: MutableState<Boolean>
+    ) {
+        LaunchedEffect(if (result.isEmpty()) result.isEmpty() else result.last()) {
             if (result.isNotEmpty()) {
                 val newImage = ImageEntity(url = result.last())
-                imageDao.insertImage(newImage)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    try {
+                        imageDao.insertImage(newImage)
+                    } catch (e: Exception) {
+                    }
+                }
             }
         }
     }
@@ -192,10 +200,14 @@ class Internet : AppCompatActivity() {
         val imagesList = remember { mutableStateListOf<String>() }
 
         LaunchedEffect(Unit) {
-            val images = imageDao.getAllImages()
-            imagesList.addAll(images.map { it.url })
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    val images = imageDao.getAllImages()
+                    imagesList.addAll(images.map { it.url })
+                } catch (e: Exception) {
+                }
+            }
         }
-        Log.d("Debug", imagesList.toString())
 
         return imagesList
     }
@@ -209,7 +221,6 @@ class Internet : AppCompatActivity() {
         onSuccess: MutableState<Boolean>,
     ) {
         Button(onClick = {
-            Log.d("Debug", "NewImage")
             error.intValue = 0
             loadingRequest.value = true
             loadingImage.value = false
@@ -274,11 +285,9 @@ class Internet : AppCompatActivity() {
             when {
                 size == 0 -> {
                     DisplayLoadingGif()
-                    Log.d("Debug", "First case")
                 }
 
                 loadingImage.value && size == 1 -> {
-                    Log.d("Debug", "Second case")
                     DisplayLoadingGif()
                     AsyncImage(
                         model = result,
@@ -289,7 +298,6 @@ class Internet : AppCompatActivity() {
                 }
 
                 result.isNotEmpty() -> {
-                    Log.d("Debug", "Three case")
                     AsyncImage(
                         model = result,
                         contentDescription = null,

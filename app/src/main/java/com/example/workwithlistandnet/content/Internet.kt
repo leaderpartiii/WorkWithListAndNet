@@ -41,7 +41,8 @@ import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.RequestListener
 import com.example.workwithlistandnet.R
 import kotlinx.coroutines.delay
-
+import com.example.workwithlistandnet.db.*
+import androidx.compose.ui.platform.LocalContext
 
 class Internet : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,16 +53,37 @@ class Internet : AppCompatActivity() {
 
     @Composable
     fun MainWindow() {
+
+
+        val context = LocalContext.current
+        val database = remember { mutableStateOf<AppDatabase?>(null) }
+        val imageDao = remember { mutableStateOf<ImageDao?>(null) }
+
+        // Список URL-адресов изображений
+        val imagesList = remember { mutableStateListOf<String>() }
+
+        // Инициализация базы данных и загрузка данных
+        LaunchedEffect(context) {
+            database.value = AppDatabase.getInstance(context)
+            imageDao.value = database.value?.imageDao()
+            imageDao.value?.let { dao ->
+                val imagesFromDB = dao.getAllImages().map { it.url }
+                imagesList.addAll(imagesFromDB)
+            }
+        }
+
         val error = rememberSaveable { mutableIntStateOf(0) }
         val loadingRequest = rememberSaveable { mutableStateOf(false) }
         val loadingImage = rememberSaveable { mutableStateOf(false) }
         val onSuccess = rememberSaveable { mutableStateOf(false) }
 
-        val imagesList = remember { mutableStateListOf<String>() }
+//        val imagesList = GetImagesFromDB(imageDao)
         val listState = rememberLazyListState()
 
 
         LoadImage(imagesList, error, loadingRequest, loadingImage)
+        AddImageToDB(imageDao, imagesList)
+
 
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -155,6 +177,28 @@ class Internet : AppCompatActivity() {
             Text(text = "Перегенерировать вайфу")
         }
     }
+
+    @Composable
+    fun AddImageToDB(imageDao: MutableState<ImageDao?>, result: SnapshotStateList<String>) {
+        LaunchedEffect(result) {
+            if (result.isNotEmpty()) {
+                val newImage = ImageEntity(url = result.last())
+                imageDao.value?.insertImage(newImage)
+            }
+        }
+    }
+
+    @Composable
+    fun GetImagesFromDB(imageDao: ImageDao): SnapshotStateList<String> {
+        val imagesList = remember { mutableStateListOf<String>() }
+
+        LaunchedEffect(Unit) {
+            val images = imageDao.getAllImages()
+            imagesList.addAll(images.map { it.url })
+        }
+        return imagesList
+    }
+
 
     @Composable
     fun NewImage(

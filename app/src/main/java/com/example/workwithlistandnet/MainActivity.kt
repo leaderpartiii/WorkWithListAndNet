@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.workwithlistandnet.content.Gif
 import com.example.workwithlistandnet.content.Internet
 
 class MainActivity : AppCompatActivity() {
@@ -64,11 +65,13 @@ fun MainWindow() {
                 }) {
                     Text(text = "Generate pictures from internet")
                 }
-                Button(onClick = { /*TODO*/ }) {
-                    Text(text = "Generate pictures from AI")
+                Button(onClick = {
+                    context.startActivity(Intent(context, Gif::class.java))
+                }) {
+                    Text(text = "Generate gifs from prompt")
                 }
                 Button(onClick = { /*TODO*/ }) {
-                    Text(text = "Generate gifs from internet")
+                    Text(text = "Generate AI pictures from internet (is not working)")
                 }
             }
         }

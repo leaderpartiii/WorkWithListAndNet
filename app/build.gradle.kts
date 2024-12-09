@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.kotlin.kapt)
 }
 
 android {
@@ -33,16 +34,16 @@ android {
         }
         release {
             isMinifyEnabled = false
-            proguardFiles(
+            /*proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
-            )
+            )*/
 
             val keystoreFile = project.rootProject.file("keys.properties")
             val properties = Properties()
             properties.load(keystoreFile.inputStream())
 
-            val apiKey = properties.getProperty("API_KEY") ?: "123"
+            val apiKey = properties.getProperty("API_KEY") ?: ""
             buildConfigField(type = "String", name = "API_KEY", value = apiKey)
         }
     }
@@ -88,6 +89,16 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.gif)
+    implementation(libs.accompanist.drawablepainter)
+    implementation("com.giphy.sdk:ui:2.3.15")
+    implementation(libs.glide)
+
+    implementation("androidx.room:room-runtime:2.5.0")
+    implementation("androidx.room:room-ktx:2.5.0")
+
+    kapt("androidx.room:room-compiler:2.5.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
